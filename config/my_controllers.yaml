@@ -11,17 +11,24 @@ controller_manager:
 
 diff_cont:
   ros__parameters:
-
     publish_rate: 50.0
 
     base_frame_id: base_link
 
-    left_wheel_names: ['left_wheel_joint']
-    right_wheel_names: ['right_wheel_joint']
-    wheel_separation: 0.297
-    wheel_radius: 0.033
+    # Updated wheel joint names for 4WD
+    left_wheel_names: ['front_left_wheel_joint', 'rear_left_wheel_joint']
+    right_wheel_names: ['front_right_wheel_joint', 'rear_right_wheel_joint']
+
+    # Update these values according to your actual URDF geometry
+    wheel_separation: 0.318  # auto-calculated from URDF
+    wheel_radius: 0.05
 
     use_stamped_vel: false
+
+    # Optional improvements
+    # cmd_vel_timeout: 0.5
+    # enable_odom_tf: true
+    # open_loop: false
 
     # open_loop: false    
 
