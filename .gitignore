@@ -1,0 +1,31 @@
+# ROS2 build and install folders
+build/
+install/
+log/
+
+# Colcon build artifacts
+*.log
+*.db
+*.pyc
+
+# Python cache
+__pycache__/
+
+# CMake files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+
+# Visual Studio Code settings
+.vscode/
+
+# Other editor settings
+.idea/
+*.swp
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# ROS2 launch files generated
+*.launch.pyc
