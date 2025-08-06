@@ -26,7 +26,7 @@ rosdep install --from-paths src --ignore-src -r -y
 3. **Build the workspace:**
 
 ```bash
-catkin_make
+ros2 launch khepa_bot launch_sim.launch.py
 ```
 
 ### Customization
