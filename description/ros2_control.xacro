@@ -101,11 +101,16 @@
     </xacro:if>
 
     <!-- Gazebo plugin for ROS2 control -->
-    <gazebo>
+    <!-- <gazebo>
         <plugin name="gz_ros2_control::GazeboSimROS2ControlPlugin"
             filename="libgz_ros2_control-system.so">
             <parameters>$(find khepa_bot)/config/my_controllers.yaml</parameters>
             <parameters>$(find khepa_bot)/config/gaz_ros2_ctl_use_sim.yaml</parameters>
+        </plugin>
+    </gazebo> -->
+    <gazebo>
+        <plugin name="gz::sim::systems::Ros2Control"
+            filename="libgz_ros2_control-system.so">
         </plugin>
     </gazebo>
 

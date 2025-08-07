@@ -4,7 +4,12 @@ from ament_index_python.packages import get_package_share_directory
 
 
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
+from launch.actions import (
+    IncludeLaunchDescription,
+    DeclareLaunchArgument,
+    RegisterEventHandler,
+)
+from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 
@@ -13,11 +18,10 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
 
-    # Include the robot_state_publisher launch file, provided by our own package. Force sim time to be enabled
-    # !!! MAKE SURE YOU SET THE PACKAGE NAME CORRECTLY !!!
+    # Package name
+    package_name = "khepa_bot"
 
-    package_name = "khepa_bot"  # <--- CHANGE ME
-
+    # Include the robot_state_publisher launch file
     rsp = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             [
@@ -29,6 +33,7 @@ def generate_launch_description():
         launch_arguments={"use_sim_time": "true", "use_ros2_control": "true"}.items(),
     )
 
+    # Joystick and Twist Mux nodes
     joystick = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             [
@@ -50,22 +55,18 @@ def generate_launch_description():
         executable="twist_mux",
         parameters=[twist_mux_params, {"use_sim_time": True}],
         remappings=[("/cmd_vel_out", "/diff_cont/cmd_vel_unstamped")],
-        # remappings=[("/cmd_vel_out", "/diff_cont/cmd_vel")],
     )
 
+    # Gazebo Sim
     default_world = os.path.join(
         get_package_share_directory(package_name), "worlds", "empty.world"
     )
-
     world = LaunchConfiguration("world")
-
     world_arg = DeclareLaunchArgument(
         "world",
         default_value=default_world,
         description="World to load",
     )
-
-    # Include the Gazebo launch file, provided by the ros_gz_sim package
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             [
@@ -82,7 +83,7 @@ def generate_launch_description():
         }.items(),
     )
 
-    # Run the spawner node from the ros_gz_sim package. The entity name doesn't really matter if you only have a single robot.
+    # Spawner for the robot entity in Gazebo
     spawn_entity = Node(
         package="ros_gz_sim",
         executable="create",
@@ -90,19 +91,31 @@ def generate_launch_description():
         output="screen",
     )
 
-    diff_drive_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["diff_cont"],
-    )
+    ## CHANGE 2: Define the controller spawners. We will launch them sequentially.
 
+    # This spawner will be launched directly.
     joint_broad_spawner = Node(
         package="controller_manager",
         executable="spawner",
         arguments=["joint_broad"],
     )
 
-    # Load the gz_bridge node, which allows us to bridge topics between ROS 2 and Gazebo
+    # This spawner will be launched by the event handler AFTER the joint_broad_spawner has finished.
+    diff_drive_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["diff_cont"],
+    )
+
+    # The event handler that ensures sequential loading of controllers
+    delayed_diff_drive_spawner = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=joint_broad_spawner,
+            on_exit=[diff_drive_spawner],
+        )
+    )
+
+    # Gazebo Bridges
     bridge_params = os.path.join(
         get_package_share_directory(package_name), "config", "gz_bridge.yaml"
     )
@@ -122,22 +135,6 @@ def generate_launch_description():
         arguments=["/camera/image_raw"],
     )
 
-    # Code for delaying a node (I haven't tested how effective it is)
-    #
-    # First add the below lines to imports
-    # from launch.actions import RegisterEventHandler
-    # from launch.event_handlers import OnProcessExit
-    #
-    # Then add the following below the current diff_drive_spawner
-    # delayed_diff_drive_spawner = RegisterEventHandler(
-    #     event_handler=OnProcessExit(
-    #         target_action=spawn_entity,
-    #         on_exit=[diff_drive_spawner],
-    #     )
-    # )
-    #
-    # Replace the diff_drive_spawner in the final return with delayed_diff_drive_spawner
-
     # Launch them all!
     return LaunchDescription(
         [
@@ -147,8 +144,10 @@ def generate_launch_description():
             world_arg,
             gazebo,
             spawn_entity,
-            diff_drive_spawner,
+            ## CHANGE 3: Launch the first spawner and the event handler.
+            # Do NOT add 'diff_drive_spawner' here directly.
             joint_broad_spawner,
+            delayed_diff_drive_spawner,
             ros_gz_bridge,
             ros_gz_image_bridge,
         ]
