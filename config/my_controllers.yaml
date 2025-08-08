@@ -12,6 +12,11 @@ controller_manager:
 diff_cont:
   ros__parameters:
     publish_rate: 50.0
+    # pose_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
+    # twist_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
+    pose_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 0.03]
+    twist_covariance_diagonal: [0.001, 0.001, 0.001, 1000000.0, 1000000.0, 0.03]
+
 
     base_frame_id: base_link
 
@@ -19,57 +24,38 @@ diff_cont:
     left_wheel_names: ['front_left_wheel_joint', 'rear_left_wheel_joint']
     right_wheel_names: ['front_right_wheel_joint', 'rear_right_wheel_joint']
 
+    wheels_per_side: 2  # 2 wheels on each side for 4WD
+
     # Update these values according to your actual URDF geometry
     wheel_separation: 0.318  # auto-calculated from URDF
     wheel_radius: 0.05
 
     use_stamped_vel: false
 
-    # Optional improvements
-    # cmd_vel_timeout: 0.5
-    # enable_odom_tf: true
-    # open_loop: false
+    # Optional improvements for control
+    cmd_vel_timeout: 0.25  # Timeout for receiving velocity commands
+    enable_odom_tf: true  # If you are using robot_localization, set to false, otherwise true
 
-    # open_loop: false    
+    # Wheel separation and radius multipliers (if you want to adjust these for specific robot performance)
+    wheel_separation_multiplier: 1.5  # Default: 1.0
+    wheel_radius_multiplier: 1.0      # Default: 1.0
 
-    # wheels_per_side: x
-    # wheel_separation_multiplier: x
-    # left_wheel_radius_multiplier: x
-    # right_wheel_radius_multiplier: x
+    # Velocity and acceleration limits
+    linear:
+      x:
+        has_velocity_limits: true
+        max_velocity: 2.0     # Max forward velocity (m/s)
+        has_acceleration_limits: true
+        max_acceleration: 20.0  # Max acceleration (m/s^2)
+    angular:
+      z:
+        has_velocity_limits: true
+        max_velocity: 4.0     # Max angular velocity (rad/s)
+        has_acceleration_limits: true
+        max_acceleration: 25.0  # Max angular acceleration (rad/s^2)
 
-    # odom_frame_id: x
-    # pose_covariance_diagonal: x
-    # twist_covariance_diagonal: x
-    # open_loop: x
-    # enable_odom_tf: x
-
-    # cmd_vel_timeout: x
-    # publish_limited_velocity: x
-    # velocity_rolling_window_size: x
-    
-
-    # linear.x.has_velocity_limits: false
-    # linear.x.has_acceleration_limits: false
+    # Optional parameters:
+    # If you need velocity or acceleration limits for other parameters, uncomment and adjust them here.
     # linear.x.has_jerk_limits: false
-    # linear.x.max_velocity: NAN
-    # linear.x.min_velocity: NAN
-    # linear.x.max_acceleration: NAN
-    # linear.x.min_acceleration: NAN
-    # linear.x.max_jerk: NAN
-    # linear.x.min_jerk: NAN
-
-    # angular.z.has_velocity_limits: false
-    # angular.z.has_acceleration_limits: false
     # angular.z.has_jerk_limits: false
-    # angular.z.max_velocity: NAN
-    # angular.z.min_velocity: NAN
-    # angular.z.max_acceleration: NAN
-    # angular.z.min_acceleration: NAN
-    # angular.z.max_jerk: NAN
-    # angular.z.min_jerk: NAN
-
-
-
-
-# joint_broad:
-#   ros__parameters:
+    # ... (Additional limits can be set if required)
